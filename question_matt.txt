@@ -1,0 +1,19 @@
+# Looking into the data
+Je capte pas ce qu'on peut tirer de la confusion matrix
+Je ne comprends pas trop l'aspect unsupervised des soil types
+Expliquer ce qu'il a voulu faire avec TSNE et PCa
+la PCA en 2D on dirait une carte de 30mx30m qui représenterait la fôret
+
+# Each Variable in detail 
+* Wilderness
+J'aime bien l'idée de trouver un lien avec les cover Types. Et de comprendre qu'on n'a pas la même proportion dans le train que le test.
+
+* ID
+
+* Elevation
+Pour le train le pic manquant à 3000 est pour WA1 et 3 et non 2
+
+* Soil Type
+Pas contre de binner, mais peut être on peut les garder pour l'istant car ça amene de l'info au XGBOOSt
+
+# Over-Undersampling
