@@ -7,7 +7,6 @@ from sklearn.metrics import accuracy_score
 
 df_test = pd.read_csv("test-full.csv")
 df_train = pd.read_csv("train.csv")
-coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
 
 #################
 # Train inclus dans test donc pour s'assurer qu'on garde bien les bon cover_types du train
@@ -29,6 +28,8 @@ def clean_predictor(y_pred, df_test=df_test, df_train=df_train):
 
 #################
 # Importance weighted cross-validation 
+coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
+
 def IWCV(df_train=df_train, 
          predictor=RandomForestClassifier(n_estimators=100, random_state=42), 
          k_valid=10,
