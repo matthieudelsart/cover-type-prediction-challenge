@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score
 
 df_test = pd.read_csv("test-full.csv")
 df_train = pd.read_csv("train.csv")
-
+coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
 
 #################
 # Train inclus dans test donc pour s'assurer qu'on garde bien les bon cover_types du train
@@ -29,19 +29,21 @@ def clean_predictor(y_pred, df_test=df_test, df_train=df_train):
 
 #################
 # Importance weighted cross-validation 
-
-coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
-
 def IWCV(df_train=df_train, 
          predictor=RandomForestClassifier(n_estimators=100, random_state=42), 
          k_valid=10,
          coeffs=coeffs):
     """
+    Inputs:
     df_train: training data
     predictor: classifier (can be a sklearn pipeline)
     k_valid: number of cross-validations desired
     coeffs: do not touch, empirically obtained to measure the over/under 
             representation of classes between train and test sets
+            
+    Outputs:
+    1. IWCV - unbiased estimate of test score if assumptions are correct
+    2. clean_accuracies - array of estimated accuracy per class
     """
     
     if "Wilderness_Area_Synth" in df_train.columns:
