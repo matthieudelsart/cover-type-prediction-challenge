@@ -28,24 +28,21 @@ def clean_predictor(y_pred, df_test=df_test, df_train=df_train):
 
 #################
 # Importance weighted cross-validation 
-coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
 
 def IWCV(df_train=df_train, 
          predictor=RandomForestClassifier(n_estimators=100, random_state=42), 
-         k_valid=10,
-         coeffs=coeffs):
+         k_valid=10):
     """
     Inputs:
     df_train: training data
     predictor: classifier (can be a sklearn pipeline)
     k_valid: number of cross-validations desired
-    coeffs: do not touch, empirically obtained to measure the over/under 
-            representation of classes between train and test sets
             
     Outputs:
     1. IWCV - unbiased estimate of test score if assumptions are correct
     2. clean_accuracies - array of estimated accuracy per class
     """
+    coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
     
     if "Wilderness_Area_Synth" in df_train.columns:
         df_train = df_train.drop(columns="Wilderness_Area_Synth")
