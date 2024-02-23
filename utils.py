@@ -129,7 +129,7 @@ def pipe_setter(n_clusters=3, clf=RandomForestClassifier(n_estimators=100, rando
     km_encoder = FunctionTransformer(_enocode_kmeans)
 
     cat_col = ["kmean_cluster"]
-    cols = df_train.drop(columns=['Cover_Type', 'Wilderness_Area_Synth']).columns
+    cols = df_train.drop(columns=['Cover_Type']).columns
 
     preprocessor = ColumnTransformer([
             ("cat", OneHotEncoder(handle_unknown="ignore"), cat_col),
