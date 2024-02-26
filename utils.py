@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -10,10 +9,33 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
 
-
-df_test = pd.read_csv("test-full.csv")
-df_train = pd.read_csv("train.csv")
+path = r"C:\Users\User\Mon Drive\HEC\DSB\ML II\ML2_Forest"
+df_test = pd.read_csv(path + r"\test-full.csv")
+df_train = pd.read_csv(path + r"\train.csv")
 coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
+
+#################
+def classif(df_train=df_train, clf=RandomForestClassifier(n_estimators=150, random_state=42)):
+    
+    if "Wilderness_Area_Synth" in df_train.columns:
+        df_train = df_train.drop(columns="Wilderness_Area_Synth")
+
+    # Separate features and target 
+    X_train = df_train.drop('Cover_Type', axis=1)
+    y_train = df_train['Cover_Type']
+
+    data_train, data_test, target_train, target_test = train_test_split(
+        X_train, y_train, test_size = 0.2
+    )
+
+    # Initialize and train a Random Forest classifier
+    clf.fit(data_train, target_train)
+
+    # Make predictions on the test dataset
+    y_pred = clf.predict(data_test)
+    
+    return target_test, y_pred
+#################
 
 
 #################
