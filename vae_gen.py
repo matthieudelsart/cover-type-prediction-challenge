@@ -6,23 +6,24 @@ import matplotlib.patches as mpatches
 from sklearn.manifold import TSNE
 
 train_df = pd.read_csv('train-cleaned.csv')
-X_train = train_df[train_df.columns.difference(['Cover_Type'])].to_numpy()
-y_train = train_df['Cover_Type'].to_numpy()
-test_df = pd.read_csv('test-full.csv')
+X_test = train_df[train_df.columns.difference(['Cover_Type'])].to_numpy()
+y_test = train_df['Cover_Type'].to_numpy()
+X_train = pd.read_csv('test-full.csv').to_numpy()
 train_tensor = torch.tensor(X_train)
 
-latent_dims = 3
+# latent_dims = 3
 
-vae = VariationalAutoencoder(latent_dims=latent_dims, input_dims=len(X_train[0]), output_dims=len(X_train[0]), verbose=False)
-vae.load_state_dict(torch.load('models/vae_model.pth'))
+# vae = VariationalAutoencoder(latent_dims=latent_dims, input_dims=len(X_train[0]), output_dims=len(X_train[0]), verbose=False)
+# vae.load_state_dict(torch.load('models/vae_model.pth'))
 
-encoder = vae.encoder
-encoder.eval()
+# encoder = vae.encoder
+# encoder.eval()
 
-latent_pred = encoder(train_tensor.float()).detach().numpy()
+# latent_pred = encoder(train_tensor.float()).detach().numpy()
 
-# tsne = TSNE(n_components=3)
-# results = tsne.fit_transform(latent_pred)
+tsne = TSNE(n_jobs=4, n_components=3)
+tsne.fit(X_train)
+results = tsne(X_test)
 
 # Customize the plot
 font_size = 14
@@ -37,9 +38,9 @@ ax = fig.add_subplot(111, projection='3d')
 # Assigning random color to each label
 labels = list(train_df['Cover_Type'].unique())
 color_dict = {label:list(mcolors.TABLEAU_COLORS.keys())[i] for i, label in enumerate(labels)}
-colors = [color_dict[value] for value in list(y_train)]
+colors = [color_dict[value] for value in list(y_test)]
 
-ax.scatter(latent_pred[:, 0],latent_pred[:, 1],latent_pred[:, 2], c=colors, marker='o')
+ax.scatter(results[:, 0],results[:, 1],results[:, 2], c=colors, marker='o')
 
 ax.set_xlabel('Component 1', fontsize=font_size, fontweight=font_weight)
 ax.set_ylabel('Component 2', fontsize=font_size, fontweight=font_weight)

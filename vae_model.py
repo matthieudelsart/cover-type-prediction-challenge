@@ -7,7 +7,7 @@ import numpy as np
 import ot
 
 class VariationalEncoder(nn.Module):
-    def __init__(self, latent_dims, input_dims, device):  
+    def __init__(self, latent_dims, input_dims):  
         super(VariationalEncoder, self).__init__()
 
         self.latent_dims = min(latent_dims, 50)
@@ -23,8 +23,6 @@ class VariationalEncoder(nn.Module):
         self.N = torch.distributions.Normal(0, 1) # Try a prior which is a mixture of gaussians?
         self.kl = 0
 
-        self.device = device
-
     def forward(self, x):
         x = F.tanh(self.fc1(x))
         x = F.tanh(self.fc2(x))
@@ -33,13 +31,13 @@ class VariationalEncoder(nn.Module):
         x = F.tanh(self.fc5(x))
         mu = self.fc6(x)
         sigma = torch.exp(self.fc7(x))
-        N = self.N.sample(mu.shape).clone().detach().to(self.device)
+        N = self.N.sample(mu.shape)
         z = mu + sigma * N
         self.kl = (sigma**2 + mu**2 - torch.log(sigma) - 1/2).sum()
         return z
 
 class VariationalDecoder(nn.Module):
-    def __init__(self, latent_dims, output_dims, device):
+    def __init__(self, latent_dims, output_dims):
         super(VariationalDecoder, self).__init__()
 
         self.latent_dims = min(latent_dims, 50)
@@ -50,8 +48,6 @@ class VariationalDecoder(nn.Module):
         self.fc4 = nn.Linear(128, 64)
         self.fc5 = nn.Linear(64, 32)
         self.fc6 = nn.Linear(32, output_dims)
-
-        self.device = device
         
     def forward(self, z):
         z = F.tanh(self.fc1(z))
@@ -63,27 +59,27 @@ class VariationalDecoder(nn.Module):
         return z
     
 class VariationalAutoencoder(nn.Module):
-    def __init__(self, latent_dims, input_dims, output_dims, verbose, device):
+    def __init__(self, latent_dims, input_dims, output_dims, verbose):
         super(VariationalAutoencoder, self).__init__()
         self.verbose = verbose
-        self.encoder = VariationalEncoder(latent_dims, input_dims, device)
-        self.decoder = VariationalDecoder(latent_dims, output_dims, device)
+        self.encoder = VariationalEncoder(latent_dims, input_dims)
+        self.decoder = VariationalDecoder(latent_dims, output_dims,)
 
     def forward(self, x):
         z = self.encoder(x)
         return self.decoder(z)
     
 ### Training function
-def train_vae(vae, X_train_input, X_train_output, optimizer, device):
+def train_vae(vae, X_train_input, X_train_output, optimizer):
     # Set train mode for both the encoder and the decoder
     vae.train()
-    batch = 25
+    batch = 300
     train_loss = 0.0
     verbose = vae.verbose
     # Iterate the dataloader (we do not need the label values, this is unsupervised learning)
     for i in range(0, len(X_train_input), batch):
-        batch_X_input = X_train_input[i:i+batch].clone().detach().float().to(device)
-        batch_X_output = X_train_output[i:i+batch].clone().detach().float().to(device)
+        batch_X_input = X_train_input[i:i+batch].float()
+        batch_X_output = X_train_output[i:i+batch].float()
         
         x_hat = vae(batch_X_input)
 
