@@ -8,6 +8,9 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
+from sklearn.model_selection import KFold
+from lightgbm import LGBMClassifier
+
 
 path = r"C:\Users\User\Mon Drive\HEC\DSB\ML II\ML2_Forest"
 df_test = pd.read_csv(path + r"\test-full.csv")
@@ -61,7 +64,7 @@ def clean_predictor(y_pred, df_test=df_test, df_train=df_train):
 
 ### 1 - normal
 def IWCV(df_train=df_train, 
-         predictor=RandomForestClassifier(n_estimators=100, random_state=42), 
+         predictor=LGBMClassifier(n_jobs=-1, verbose=0), 
          k_valid=10,
          coeffs=coeffs):
     """
@@ -73,20 +76,22 @@ def IWCV(df_train=df_train,
     Outputs:
     1. IWCV - unbiased estimate of test score if assumptions are correct
     2. clean_accuracies - array of estimated accuracy per class
-    """    
-    if "Wilderness_Area_Synth" in df_train.columns:
-        df_train = df_train.drop(columns="Wilderness_Area_Synth")
+    """
         
     # Separate features and target 
     X_train = df_train.drop('Cover_Type', axis=1)
     y_train = df_train['Cover_Type']
     
     class_accuracies = np.zeros((k_valid, 7))
+    kf = KFold(n_splits=k_valid, shuffle=True)
     
-    for i in range(k_valid):
-        data_train, data_test, target_train, target_test = train_test_split(
-            X_train, y_train, test_size = 1 / k_valid
-        )
+    for i, (train_index, test_index)  in enumerate(kf.split(df_train)):
+        
+        data_train = X_train.loc[train_index]
+        data_test = X_train.loc[test_index]
+        target_train = y_train[train_index]
+        target_test = y_train[test_index]
+        
         predictor.fit(data_train, target_train)
         y_pred = predictor.predict(data_test)
 
