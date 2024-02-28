@@ -65,8 +65,7 @@ def clean_predictor(y_pred, df_test=df_test, df_train=df_train):
 ### 1 - normal
 def IWCV(df_train=df_train, 
          predictor=LGBMClassifier(n_jobs=-1, verbose=0), 
-         k_valid=10,
-         coeffs=coeffs):
+         k_valid=10):
     """
     Inputs:
     df_train: training data
@@ -104,12 +103,9 @@ def IWCV(df_train=df_train,
 
 ### 2 - with oversampling
 def IWCV_oversample(df_train=df_train, 
-         predictor=RandomForestClassifier(n_estimators=100, random_state=42), 
+         predictor=LGBMClassifier(n_jobs=-1, verbose=0), 
          k_valid=10,
-         ovs_strat = {1: 30_000, 2: 30_000}) :
-    
-    if "Wilderness_Area_Synth" in df_train.columns:
-        df_train = df_train.drop(columns="Wilderness_Area_Synth")
+         ovs_strat={1: 30_000, 2: 30_000}) :
 
     # Define the oversampler
     adasyn = ADASYN(sampling_strategy=ovs_strat) ## Random state = 4 ou 1 sont les meilleurs so far à 0.8297 en CV (mais fixer seed aussi en cross_val...)
@@ -119,11 +115,15 @@ def IWCV_oversample(df_train=df_train,
     y_train = df_train['Cover_Type']
     
     class_accuracies = np.zeros((k_valid, 7))
+    kf = KFold(n_splits=k_valid, shuffle=True)
+
     
-    for i in range(k_valid):
-        data_train, data_test, target_train, target_test = train_test_split(
-            X_train, y_train, test_size = 1 / k_valid
-        )
+    for i, (train_index, test_index)  in enumerate(kf.split(df_train)):
+        
+        data_train = X_train.loc[train_index]
+        data_test = X_train.loc[test_index]
+        target_train = y_train[train_index]
+        target_test = y_train[test_index]
         
         # Oversampling
         X_train_synth, y_train_synth = adasyn.fit_resample(data_train, target_train)
