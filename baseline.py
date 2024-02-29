@@ -2,10 +2,12 @@ from utils import clean_predictor
 import pandas as pd
 import numpy as np
 from lightgbm import LGBMClassifier
+from sklearn.metrics import accuracy_score
 
 # Reading
 df_test = pd.read_csv("test-full.csv")
 df_train = pd.read_csv("train.csv")
+predict_true = pd.read_parquet("ground_truth.parquet")["Cover_Type"]
 
 # Un-one-hot-encoding the categorical variables
 soil_types = [f"Soil_Type{i}" for i in range(1, 41)]
@@ -45,4 +47,5 @@ clf = LGBMClassifier(
 clf.fit(X_train, y_train, categorical_feature=['Wilderness_Area_Synth', 'Soil_Type_Synth'])
 y_pred = clf.predict(df_test)
 predictions_df = clean_predictor(y_pred)
+print(f"Score: {accuracy_score(predictions_df['Cover_Type'], predict_true)}")
 predictions_df.to_csv('test_predictions.csv', index=False) 
