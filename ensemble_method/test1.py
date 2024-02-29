@@ -36,11 +36,11 @@ params = {
     'max_depth': [22],
     'learning_rate': [0.2]
 }
-# gbm = GradientBoostingClassifier()
-# gbm_grid = GridSearchCV(gbm, params, scoring='roc_auc_ovr_weighted', cv=10, verbose=1, n_jobs=-1, return_train_score=False)
-# gbm_grid.fit(X, y)
-# pred1 = gbm_grid.predict(X)
-# print(confusion_matrix(y, pred1))
+gbm = GradientBoostingClassifier()
+gbm_grid = GridSearchCV(gbm, params, scoring='roc_auc_ovr_weighted', cv=10, verbose=1, n_jobs=-1, return_train_score=False)
+gbm_grid.fit(X_train, y_train)
+pred1 = gbm_grid.predict(X_test)
+print(confusion_matrix(y_test, pred1))
 
 # RF model
 # rf = RandomForestClassifier()
@@ -50,10 +50,10 @@ params = {
 # print(confusion_matrix(y, pred2))
 
 # NB model
-nb = GaussianNB()
-nb.fit(X_train, y_train)
-pred3 = nb.predict(X_test)
-print(confusion_matrix(y_test, pred3))
+# nb = GaussianNB()
+# nb.fit(X_train, y_train)
+# pred3 = nb.predict(X_test)
+# print(confusion_matrix(y_test, pred3))
 
 # Ensemble model
 # ensemble = VotingClassifier(estimators=[('gbm', gbm_grid), ('rf', rf_grid), ('nb', nb)], voting='soft')
@@ -61,6 +61,6 @@ print(confusion_matrix(y_test, pred3))
 # ensemble_pred = ensemble.predict(X)
 # print(confusion_matrix(y, ensemble_pred))
 
-accuracy = (pred3 == y_test).mean()
+accuracy = (pred1 == y_test).mean()
 
 print("Accuracy:", accuracy)
