@@ -8,11 +8,14 @@ import matplotlib.patches as mpatches
 X_test = pd.read_csv('../test-cleaned.csv').to_numpy()
 train = pd.read_csv('../train-cleaned.csv')
 
+y_test = pd.read_parquet('../covertype/ground_truth.parquet')['Cover_Type'].to_numpy()
+
 X_train = train.iloc[:, :-1].to_numpy()
 y_train = train['Cover_Type'].to_numpy()
 
 from umap import UMAP
 from sklearn.decomposition import PCA
+from sklearn.svm import SVC
 
 dim_red = PCA(n_components=5)
 dim_red.fit(X_test)
@@ -46,3 +49,16 @@ ax.view_init(elev=20, azim=30)
 legend_handles = [mpatches.Patch(color=color, label=label) for label, color in color_dict.items()]
 plt.legend(handles=legend_handles, fontsize=14)
 plt.savefig('3DUMAP.png', dpi=200)
+
+# Make predictions
+red_df = pd.DataFrame(results, columns=[f'PCA{i+1}' for i in range(5)])
+
+clf = SVC(gamma='auto')
+clf.fit(results, y_train)
+
+y_pred = clf.predict(dim_red.transform(X_test))
+
+# Compare the predicted values with the ground truth
+accuracy = (y_pred == y_test).mean()
+
+print("Accuracy:", accuracy)
