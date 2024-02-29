@@ -66,3 +66,13 @@ def IWCV(df_train=df_train,
         IMCV = np.mean(class_accuracies @ coeffs) / np.sum(coeffs)
         
     return IMCV, class_accuracies.mean(axis=0)
+
+###############
+def unonehot(df):
+    soil_types = [f"Soil_Type{i}" for i in range(1, 41)]
+    wilderness_areas = [f"Wilderness_Area{i}" for i in range(1,5)]
+    df["Wilderness_Area_Synth"] = df[wilderness_areas] @ range(1,5)
+    df["Soil_Type_Synth"] = df[soil_types] @ range(1,41)
+    df = df.drop(columns=wilderness_areas + soil_types)
+
+    return df
