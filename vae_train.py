@@ -9,7 +9,7 @@ train_tensor = torch.tensor(X_train)
 verbose = True
 epochs = 80
 lr = 1e-5
-latent_dims = 3
+latent_dims = 40
 
 vae = VariationalAutoencoder(latent_dims=latent_dims, 
                              input_dims=len(X_train[0]), output_dims=len(X_train[0]),
