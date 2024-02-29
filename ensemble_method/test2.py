@@ -7,15 +7,23 @@ import matplotlib.patches as mpatches
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 
+import sys
+sys.path.insert(1, '../')
+
+from utils import unonehot
+
 test = pd.read_csv('../test-full.csv')
 train = pd.read_csv('../train.csv')
+
+test_ord = unonehot(test)
+train_ord = unonehot(train)
 
 truth = pd.read_parquet('../covertype/ground_truth.parquet')
 y_test = truth['Cover_Type'].to_numpy() - 1
 
-X_test_pca = test.to_numpy()
-X_train_pca = train.iloc[:, :-1].to_numpy()
-y_train_pca = train['Cover_Type'].to_numpy()
+X_test_pca = test_ord.to_numpy()
+X_train_pca = train_ord.iloc[:, :-1].to_numpy()
+y_train_pca = train_ord['Cover_Type'].to_numpy()
 
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
