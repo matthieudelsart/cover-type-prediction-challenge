@@ -60,7 +60,7 @@ train_pca = pd.concat([train, train_pca_df], axis=1)
 test_pca = pd.concat([test, test_pca_df])
 
 X_test = test_pca.to_numpy()
-X_train = train_pca[train_pca.columns.diff(['Cover_Type'])].to_numpy()
+X_train = train_pca[train_pca.columns.difference(['Cover_Type'])].to_numpy()
 y_train = train['Cover_Type'].to_numpy()
 
 rf = RandomForestClassifier()

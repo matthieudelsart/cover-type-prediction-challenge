@@ -43,11 +43,11 @@ pred1 = gbm_grid.predict(X_test)
 print(confusion_matrix(y_test, pred1))
 
 # RF model
-# rf = RandomForestClassifier()
-# rf_grid = GridSearchCV(rf, {'n_estimators': [100, 200], 'max_depth': [10, 20, 30]}, scoring='roc_auc_ovr_weighted', cv=10, verbose=1, n_jobs=-1)
-# rf_grid.fit(X, y)
-# pred2 = rf_grid.predict(X)
-# print(confusion_matrix(y, pred2))
+rf = RandomForestClassifier()
+rf_grid = GridSearchCV(rf, {'n_estimators': [100, 200], 'max_depth': [10, 20, 30]}, scoring='roc_auc_ovr_weighted', cv=10, verbose=1, n_jobs=-1)
+rf_grid.fit(X, y)
+pred2 = rf_grid.predict(X)
+print(confusion_matrix(y, pred2))
 
 # NB model
 # nb = GaussianNB()
