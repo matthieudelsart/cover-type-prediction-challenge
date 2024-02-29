@@ -5,20 +5,24 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 
-test = pd.read_csv('../test-cleaned.csv')
-train = pd.read_csv('../train-cleaned.csv')
+test = pd.read_csv('../test-full.csv')
+train = pd.read_csv('../train.csv')
 
 truth = pd.read_parquet('../covertype/ground_truth.parquet')
-y_test = truth['Cover_Type'].to_numpy()
+y_test = truth['Cover_Type'].to_numpy() - 1
 
 X_test_pca = test.to_numpy()
 X_train_pca = train.iloc[:, :-1].to_numpy()
 y_train_pca = train['Cover_Type'].to_numpy()
 
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
-dim_red = PCA(n_components=5)
+n = 3
+dim_red = PCA(n_components=3)
+#dim_red = TSNE(n_components=n)
 dim_red.fit(X_test_pca)
 
 train_results = dim_red.transform(X_train_pca)
@@ -39,7 +43,7 @@ labels = list(train['Cover_Type'].unique())
 color_dict = {label:list(mcolors.TABLEAU_COLORS.keys())[i] for i, label in enumerate(labels)}
 colors = [color_dict[value] for value in list(y_train_pca)]
 
-ax.scatter(train_results[:, 0], train_results[:, 4], train_results[:, 2], c=colors, marker='o')
+# ax.scatter(train_results[:, 0], train_results[:, 1], train_results[:, 2], c=colors, marker='o')
 
 ax.set_xlabel('Component 1', fontsize=font_size, fontweight=font_weight)
 ax.set_ylabel('Component 2', fontsize=font_size, fontweight=font_weight)
@@ -53,15 +57,17 @@ plt.legend(handles=legend_handles, fontsize=14)
 plt.savefig('3DUMAP.png', dpi=200)
 
 # Make predictions
-train_pca_df = pd.DataFrame(train_results, columns=[f'PCA{i+1}' for i in range(5)])
-test_pca_df = pd.DataFrame(test_results, columns=[f'PCA{i+1}' for i in range(5)])
+train_pca_df = pd.DataFrame(train_results[:, :n], columns=[f'PCA{i+1}' for i in range(n)])
+test_pca_df = pd.DataFrame(test_results[:, :n], columns=[f'PCA{i+1}' for i in range(n)])
 
 train_pca = pd.concat([train, train_pca_df], axis=1)
-test_pca = pd.concat([test, test_pca_df])
+test_pca = pd.concat([test, test_pca_df], axis=1)
+
+train_pca = train_pca[list(test_pca.columns) + ['Cover_Type']]
 
 X_test = test_pca.to_numpy()
-X_train = train_pca[train_pca.columns.diff(['Cover_Type'])].to_numpy()
-y_train = train['Cover_Type'].to_numpy()
+X_train = train_pca.iloc[:, :-1].to_numpy()
+y_train = train_pca['Cover_Type'].to_numpy() - 1
 
 rf = RandomForestClassifier()
 rf.fit(X_train, y_train)
