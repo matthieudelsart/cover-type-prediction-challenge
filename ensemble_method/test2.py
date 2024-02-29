@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
+from sklearn.ensemble import RandomForestClassifier
 
 X_test = pd.read_csv('../test-cleaned.csv').to_numpy()
 train = pd.read_csv('../train-cleaned.csv')
@@ -53,10 +54,11 @@ plt.savefig('3DUMAP.png', dpi=200)
 # Make predictions
 red_df = pd.DataFrame(results, columns=[f'PCA{i+1}' for i in range(5)])
 
-clf = SVC(gamma='auto')
-clf.fit(results, y_train)
+rf = RandomForestClassifier()
+rf.fit(X_train, y_train)
+y_pred = rf.predict(X_test)
 
-y_pred = clf.predict(dim_red.transform(X_test))
+#y_pred = clf.predict(dim_red.transform(X_test))
 
 # Compare the predicted values with the ground truth
 accuracy = (y_pred == y_test).mean()
