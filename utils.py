@@ -171,8 +171,6 @@ def IWCV_ovs_km(df_train=df_train,
          coeffs=coeffs):
     
     ovs_strat = {1: 30_000, 2: 30_000}
-    if "Wilderness_Area_Synth" in df_train.columns:
-        df_train = df_train.drop(columns="Wilderness_Area_Synth")
 
     # Define the oversampler
     adasyn = ADASYN(sampling_strategy=ovs_strat) 
