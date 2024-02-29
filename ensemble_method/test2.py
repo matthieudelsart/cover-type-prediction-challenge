@@ -7,6 +7,7 @@ import matplotlib.patches as mpatches
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
+from imblearn.over_sampling import ADASYN, SMOTENC
 
 import sys
 sys.path.insert(1, '../')
@@ -22,12 +23,13 @@ train = unonehot(train)
 truth = pd.read_parquet('../covertype/ground_truth.parquet')
 y_test = truth['Cover_Type'].to_numpy()
 
-X_test_pca = test.to_numpy()
-X_train_pca = train.iloc[:, :-1].to_numpy()
+X_test_pca = test.drop(['Id'], axis=1).to_numpy()
+X_train_pca = train.drop(['Id'], axis=1).iloc[:, :-1].to_numpy()
 y_train_pca = train['Cover_Type'].to_numpy()
 
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.decomposition import KernelPCA
 
 n = 3
 dim_red = PCA(n_components=3)
@@ -96,8 +98,18 @@ y_train = train_pca['Cover_Type'].to_numpy()
 #    7: 0.04
 #}
 
+### 1. OVERSAMPLING CLASS 2 AND 1
+ovs_strat = {1: 3_000, 2: 5_000}
 
-class_weights = {2: 0.45914714326038014, 1: 0.36341762304393027, 3: 0.06307098648564918, 7: 0.04384246796968049, 6: 0.0349837869097368, 5: 0.029481318802365528, 4: 0.006056673528257592}
+# Oversampling
+#adasyn = ADASYN(sampling_strategy=ovs_strat, n_neighbors=4)
+#X_train, y_train = adasyn.fit_resample(X_train, y_train)
+
+sm = SMOTENC(categorical_features=[11, 12], sampling_strategy=ovs_strat, k_neighbors=3)
+X_train, y_train = sm.fit_resample(X_train, y_train)
+
+#class_weights = {2: 0.45914714326038014, 1: 0.36341762304393027, 3: 0.06307098648564918, 7: 0.04384246796968049, 6: 0.0349837869097368, 5: 0.029481318802365528, 4: 0.006056673528257592}
+class_weights = {2: 0.4604913495762566, 1: 0.3627567072625006, 3: 0.06331366649914287, 7: 0.04459116162833126, 6: 0.03524023600201029, 5: 0.02767584834736632, 4: 0.005931030684392061}
 
 clf = LGBMClassifier(
     objective='multiclass',
@@ -106,8 +118,6 @@ clf = LGBMClassifier(
     verbose=1,
     n_jobs=-1
 )
-
-print(train_pca.info())
 
 clf.fit(X_train, y_train, categorical_feature=['Wilderness_Area_Synth', 'Soil_Type_Synth'], feature_name=list(test_pca.columns))
 y_pred = clf.predict(X_test)
