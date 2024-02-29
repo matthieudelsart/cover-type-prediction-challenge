@@ -6,24 +6,25 @@ import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 
 import sys
 sys.path.insert(1, '../')
 
 from utils import unonehot
 
-test = pd.read_csv('../test-full.csv')
-train = pd.read_csv('../train.csv')
+test = pd.read_csv("../test-full.csv")
+train = pd.read_csv("../train.csv")
 
-test_ord = unonehot(test)
-train_ord = unonehot(train)
+test = unonehot(test)
+train = unonehot(train)
 
 truth = pd.read_parquet('../covertype/ground_truth.parquet')
-y_test = truth['Cover_Type'].to_numpy() - 1
+y_test = truth['Cover_Type'].to_numpy()
 
-X_test_pca = test_ord.to_numpy()
-X_train_pca = train_ord.iloc[:, :-1].to_numpy()
-y_train_pca = train_ord['Cover_Type'].to_numpy()
+X_test_pca = test.to_numpy()
+X_train_pca = train.iloc[:, :-1].to_numpy()
+y_train_pca = train['Cover_Type'].to_numpy()
 
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -73,17 +74,58 @@ test_pca = pd.concat([test, test_pca_df], axis=1)
 
 train_pca = train_pca[list(test_pca.columns) + ['Cover_Type']]
 
+cats = ['Wilderness_Area_Synth', 'Soil_Type_Synth']
+train_pca[cats] = train_pca[cats].astype('category')
+test_pca[cats] = test_pca[cats].astype('category')
+
 X_test = test_pca.to_numpy()
 X_train = train_pca.iloc[:, :-1].to_numpy()
-y_train = train_pca['Cover_Type'].to_numpy() - 1
+y_train = train_pca['Cover_Type'].to_numpy()
 
-rf = RandomForestClassifier()
-rf.fit(X_train, y_train)
-y_pred = rf.predict(X_test)
+#rf = RandomForestClassifier()
+#rf.fit(X_train, y_train)
+#y_pred = rf.predict(X_test)
 
-#y_pred = clf.predict(dim_red.transform(X_test))
+#class_weights = {
+#    1: 0.4,
+#    2: 0.45,
+#    3: 0.04,
+#    4: 0.01,
+#    5: 0.04,
+#    6: 0.04,
+#    7: 0.04
+#}
+
+
+class_weights = {2: 0.45914714326038014, 1: 0.36341762304393027, 3: 0.06307098648564918, 7: 0.04384246796968049, 6: 0.0349837869097368, 5: 0.029481318802365528, 4: 0.006056673528257592}
+
+clf = LGBMClassifier(
+    objective='multiclass',
+    num_class=7,
+    class_weight=class_weights,
+    verbose=1,
+    n_jobs=-1
+)
+
+print(train_pca.info())
+
+clf.fit(X_train, y_train, categorical_feature=['Wilderness_Area_Synth', 'Soil_Type_Synth'], feature_name=list(test_pca.columns))
+y_pred = clf.predict(X_test)
+
+id_df = test['Id']
+preds_df = pd.DataFrame(y_pred, columns=['Cover_Type'])
+
+preds_df = pd.concat([id_df, preds_df], axis=1)
+preds_df.to_csv('preds.csv', index=False)
 
 # Compare the predicted values with the ground truth
 accuracy = (y_pred == y_test).mean()
 
 print("Accuracy:", accuracy)
+
+
+cover_type_counts = preds_df['Cover_Type'].value_counts()
+total_predictions = cover_type_counts.sum()
+cover_type_ratios = cover_type_counts / total_predictions
+cover_type_ratio_dict = cover_type_ratios.to_dict()
+print(cover_type_ratio_dict)

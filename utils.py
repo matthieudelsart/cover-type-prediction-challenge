@@ -5,13 +5,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-df_test = pd.read_csv("test-full.csv")
-df_train = pd.read_csv("train.csv")
-
-
 #################
 # Train inclus dans test donc pour s'assurer qu'on garde bien les bon cover_types du train
-def clean_predictor(y_pred, df_test=df_test, df_train=df_train):
+def clean_predictor(y_pred, df_test, df_train):
     predictions_df = pd.DataFrame({'Cover_Type': y_pred})
     predictions_df['Id'] = range(1, len(df_test) + 1)
     
@@ -32,7 +28,7 @@ def clean_predictor(y_pred, df_test=df_test, df_train=df_train):
 
 coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
 
-def IWCV(df_train=df_train, 
+def IWCV(df_train, 
          predictor=RandomForestClassifier(n_estimators=100, random_state=42), 
          k_valid=10,
          coeffs=coeffs):
