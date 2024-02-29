@@ -58,7 +58,7 @@ def clean_predictor(y_pred, Id=None):
 def IWCV(df_train=None,
          predictor=RandomForestClassifier(n_estimators=100, random_state=42),
          k_valid=10,
-         verbose=0):
+         verbose=0, categorical_feature=None):
     """
     df_train: training data
     predictor: classifier (can be a sklearn pipeline)
@@ -73,6 +73,11 @@ def IWCV(df_train=None,
     if "Wilderness_Area_Synth" in df_train.columns:
         df_train = df_train.drop(columns="Wilderness_Area_Synth")
 
+    if categorical_feature is not None:
+        if not all(col in df_train.columns for col in categorical_feature):
+            raise ValueError(
+                "Some categorical features are not in the DataFrame's columns.")
+
     # Separate features and target
     X_train = df_train.drop('Cover_Type', axis=1)
     y_train = df_train['Cover_Type']
@@ -85,7 +90,11 @@ def IWCV(df_train=None,
         data_train, data_test, target_train, target_test = train_test_split(
             X_train, y_train, test_size=1/k_valid
         )
-        predictor.fit(data_train, target_train)
+        if categorical_feature is not None:
+            predictor.fit(data_train, target_train,
+                          categorical_feature=categorical_feature)
+        else:
+            predictor.fit(data_train, target_train)
         y_pred = predictor.predict(data_test)
 
         for label in range(1, 8):
