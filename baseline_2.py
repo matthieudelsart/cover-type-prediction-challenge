@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from lightgbm import LGBMClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler
 
 # Reading
 df_test = pd.read_csv("test-full.csv")
@@ -22,6 +23,11 @@ df_test = df_test.drop(columns=wilderness_areas + soil_types)
 # Separating features and target
 X_train = df_train.drop(columns=['Cover_Type'], axis=1)
 y_train = df_train['Cover_Type']
+
+# Scaling
+std = StandardScaler()
+df_test.loc[:, "Id": "Horizontal_Distance_To_Fire_Points"] = std.fit_transform(df_test.loc[:, "Id": "Horizontal_Distance_To_Fire_Points"])
+X_train.loc[:, "Id": "Horizontal_Distance_To_Fire_Points"] = std.transform(X_train.loc[:, "Id": "Horizontal_Distance_To_Fire_Points"])
 
 # Setting class weights
 coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
