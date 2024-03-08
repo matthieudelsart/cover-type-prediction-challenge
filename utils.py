@@ -65,10 +65,10 @@ def IWCV(df_train,
 
 ###############
 def unonehot(df):
-    soil_types = [f"Soil_Type{i}" for i in range(1, 41)]
-    wilderness_areas = [f"Wilderness_Area{i}" for i in range(1,5)]
+    soil_types = [f"Soil_Type{i}" for i in range(1, 41) if i not in [7, 15]]
+    wilderness_areas = [f"Wilderness_Area{i}" for i in range(1,5) if i not in [7, 15]]
     df["Wilderness_Area_Synth"] = df[wilderness_areas] @ range(1,5)
-    df["Soil_Type_Synth"] = df[soil_types] @ range(1,41)
+    df["Soil_Type_Synth"] = df[soil_types] @ range(1,39)
     df = df.drop(columns=wilderness_areas + soil_types)
 
     return df

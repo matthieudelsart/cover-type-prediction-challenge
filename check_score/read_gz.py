@@ -20,6 +20,9 @@ predictions = pred_df['Cover_Type']
 # Assuming 'Cover_Type' is the column containing the ground truth in df_ground_truth
 ground_truth = df['Cover_Type']
 
+print(ground_truth.value_counts())
+print(len(ground_truth))
+
 # Compare the predicted values with the ground truth
 accuracy = (predictions == ground_truth).mean()
 
