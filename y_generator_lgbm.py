@@ -33,7 +33,7 @@ X_train = df_train.drop(columns=['Cover_Type'], axis=1)
 y_train = df_train['Cover_Type']
 
 # Oversampling
-adasyn = ADASYN(sampling_strategy=ovs_strat)
+adasyn = ADASYN(sampling_strategy=ovs_strat, n_jobs=-1)
 X_train_synth, y_train_synth = adasyn.fit_resample(X_train, y_train)
 X_train_synth = pd.DataFrame(X_train_synth, columns=X_train.columns)
 
