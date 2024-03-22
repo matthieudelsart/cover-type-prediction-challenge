@@ -46,8 +46,8 @@ X_train_synth["kmean_cluster"] = km_test.predict(X_train_synth.loc[:, "Id": "Hor
 
 # Without ID
 km = KMeans(n_clusters=12, n_init=5, init="k-means++")
-df_test["GMM"] = km.fit_predict(df_test.loc[:, "Elevation": "Horizontal_Distance_To_Fire_Points"])
-X_train_synth["GMM"] = km.predict(X_train_synth.loc[:, "Elevation": "Horizontal_Distance_To_Fire_Points"])
+df_test["kmean_2"] = km.fit_predict(df_test.loc[:, "Elevation": "Horizontal_Distance_To_Fire_Points"])
+X_train_synth["kmean_2"] = km.predict(X_train_synth.loc[:, "Elevation": "Horizontal_Distance_To_Fire_Points"])
 
 ### 3. PCA
 

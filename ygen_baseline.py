@@ -4,7 +4,7 @@ from imblearn.over_sampling import SVMSMOTE
 from utils import clean_predictor
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.mixture import GaussianMixture
 from sklearn.decomposition import PCA
@@ -40,6 +40,7 @@ X_train_synth = pd.DataFrame(X_train_synth, columns=X_train.columns)
 
 ### 4. GENERATING
 clf = RandomForestClassifier(n_estimators=150, n_jobs=-1)
+# clf =  ExtraTreesClassifier(n_estimators=300, max_features=None, min_samples_leaf=1, min_samples_split=2, n_jobs=-1)
 
 clf.fit(X_train_synth, y_train_synth)
 y_pred = clf.predict(df_test)
