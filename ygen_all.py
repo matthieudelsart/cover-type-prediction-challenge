@@ -39,7 +39,7 @@ X_train_synth, y_train_synth = svmsmote.fit_resample(X_train, y_train)
 X_train_synth = pd.DataFrame(X_train_synth, columns=X_train.columns)
 
 # Baseline to evaluate
-clf = RandomForestClassifier(n_estimators=150, n_jobs=-1, max_leaf_nodes=4)
+clf = RandomForestClassifier(n_estimators=150, n_jobs=-1)
 # clf = ExtraTreesClassifier(n_estimators=300, max_features=None, min_samples_leaf=1, min_samples_split=2, n_jobs=-1)
 
 
