@@ -1,14 +1,11 @@
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+
 from imblearn.over_sampling import SVMSMOTE
 from utils import clean_predictor
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.mixture import GaussianMixture
-from sklearn.decomposition import PCA
-from sklearn.pipeline import make_pipeline
+
 
 df_test = pd.read_csv("test-full.csv")
 df_train = pd.read_csv("train.csv")

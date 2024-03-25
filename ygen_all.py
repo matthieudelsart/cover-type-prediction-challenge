@@ -39,9 +39,9 @@ X_train_synth, y_train_synth = svmsmote.fit_resample(X_train, y_train)
 X_train_synth = pd.DataFrame(X_train_synth, columns=X_train.columns)
 
 # Baseline to evaluate
-clf = RandomForestClassifier(n_estimators=150, n_jobs=-1)
+# clf = RandomForestClassifier(n_estimators=150, n_jobs=-1)
 # clf = ExtraTreesClassifier(n_estimators=300, max_features=None, min_samples_leaf=1, min_samples_split=2, n_jobs=-1)
-
+clf = ExtraTreesClassifier(n_estimators=150, n_jobs=-1, random_state=42)
 
 clf.fit(X_train_synth, y_train_synth)
 y_pred = clf.predict(df_test)
@@ -125,6 +125,10 @@ pca_1 = PCA(n_components=4)
 pca_cols_1 = ["PCA_1", "PCA_2", "PCA_3", "PCA_4"]
 df_test.loc[:, pca_cols_1] = pca_1.fit_transform(df_test.loc[:, "Id": "Horizontal_Distance_To_Fire_Points"])
 X_train_synth.loc[:, pca_cols_1] = pca_1.transform(X_train_synth.loc[:, "Id": "Horizontal_Distance_To_Fire_Points"])
+df_test.drop(columns='PCA_1', inplace=True)
+X_train_synth.drop(columns='PCA_1', inplace=True)
+pca_cols_1 = ["PCA_2", "PCA_3", "PCA_4"]
+
 
 # Evaluating
 clf.fit(X_train_synth[base_cols + new_cols + pca_cols_1], y_train_synth)
@@ -133,22 +137,22 @@ predictions_df = clean_predictor(y_pred)
 print(f"New features + pcaID: {accuracy_score(predictions_df['Cover_Type'], predict_true)}")
 
 # Without ID
-pca_2 = PCA(n_components=2)
-pca_cols_2 = ["PCA_5", "PCA_6"]
-df_test.loc[:, pca_cols_2] = pca_2.fit_transform(df_test.loc[:, "Elevation": "Horizontal_Distance_To_Fire_Points"])
-X_train_synth.loc[:, pca_cols_2] = pca_2.transform(X_train_synth.loc[:, "Elevation": "Horizontal_Distance_To_Fire_Points"]) 
+# pca_2 = PCA(n_components=2)
+# pca_cols_2 = ["PCA_5", "PCA_6"]
+# df_test.loc[:, pca_cols_2] = pca_2.fit_transform(df_test.loc[:, "Elevation": "Horizontal_Distance_To_Fire_Points"])
+# X_train_synth.loc[:, pca_cols_2] = pca_2.transform(X_train_synth.loc[:, "Elevation": "Horizontal_Distance_To_Fire_Points"]) 
 
 # Evaluating
-clf.fit(X_train_synth[base_cols + new_cols + pca_cols_2], y_train_synth)
-y_pred = clf.predict(df_test[base_cols + new_cols + pca_cols_2])
-predictions_df = clean_predictor(y_pred)
-print(f"New features + pcaNoID: {accuracy_score(predictions_df['Cover_Type'], predict_true)}")
+# clf.fit(X_train_synth[base_cols + new_cols + pca_cols_2], y_train_synth)
+# y_pred = clf.predict(df_test[base_cols + new_cols + pca_cols_2])
+# predictions_df = clean_predictor(y_pred)
+# print(f"New features + pcaNoID: {accuracy_score(predictions_df['Cover_Type'], predict_true)}")
 
 # Evaluating both PCAs
-clf.fit(X_train_synth[base_cols + new_cols + pca_cols_1 + pca_cols_2], y_train_synth)
-y_pred = clf.predict(df_test[base_cols + new_cols + pca_cols_1 + pca_cols_2])
-predictions_df = clean_predictor(y_pred)
-print(f"New features + 2 PCA: {accuracy_score(predictions_df['Cover_Type'], predict_true)}")
+# clf.fit(X_train_synth[base_cols + new_cols + pca_cols_1 + pca_cols_2], y_train_synth)
+# y_pred = clf.predict(df_test[base_cols + new_cols + pca_cols_1 + pca_cols_2])
+# predictions_df = clean_predictor(y_pred)
+# print(f"New features + 2 PCA: {accuracy_score(predictions_df['Cover_Type'], predict_true)}")
 
 
 ### 4. EVALUATING OVERALL
