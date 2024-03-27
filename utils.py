@@ -1,13 +1,47 @@
-
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from imblearn.over_sampling import ADASYN
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.cluster import KMeans
+from sklearn.model_selection import KFold
+
+
+df_test = pd.read_csv("test-full.csv")
+df_train = pd.read_csv("train.csv")
+coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
+
+#################
+def classif(df_train=df_train, clf=RandomForestClassifier(n_estimators=150, random_state=42)):
+    
+    if "Wilderness_Area_Synth" in df_train.columns:
+        df_train = df_train.drop(columns="Wilderness_Area_Synth")
+
+    # Separate features and target 
+    X_train = df_train.drop('Cover_Type', axis=1)
+    y_train = df_train['Cover_Type']
+
+    data_train, data_test, target_train, target_test = train_test_split(
+        X_train, y_train, test_size = 0.2
+    )
+
+    # Initialize and train a Random Forest classifier
+    clf.fit(data_train, target_train)
+
+    # Make predictions on the test dataset
+    y_pred = clf.predict(data_test)
+    
+    return target_test, y_pred
+#################
+
 
 #################
 # Train inclus dans test donc pour s'assurer qu'on garde bien les bon cover_types du train
-def clean_predictor(y_pred, df_test, df_train):
+def clean_predictor(y_pred, df_test=df_test, df_train=df_train):
     predictions_df = pd.DataFrame({'Cover_Type': y_pred})
     predictions_df['Id'] = range(1, len(df_test) + 1)
     
@@ -26,33 +60,35 @@ def clean_predictor(y_pred, df_test, df_train):
 #################
 # Importance weighted cross-validation 
 
-coeffs = np.array([2.63, 3.06, 0.43, 0.05, 0.24, 0.27, 0.32])
-
-def IWCV(df_train, 
-         predictor=RandomForestClassifier(n_estimators=100, random_state=42), 
-         k_valid=10,
-         coeffs=coeffs):
+### 1 - normal
+def IWCV(predictor,
+         df_train=df_train, 
+         k_valid=10):
     """
+    Inputs:
     df_train: training data
     predictor: classifier (can be a sklearn pipeline)
     k_valid: number of cross-validations desired
-    coeffs: do not touch, empirically obtained to measure the over/under 
-            representation of classes between train and test sets
+            
+    Outputs:
+    1. IWCV - unbiased estimate of test score if assumptions are correct
+    2. clean_accuracies - array of estimated accuracy per class
     """
-    
-    if "Wilderness_Area_Synth" in df_train.columns:
-        df_train = df_train.drop(columns="Wilderness_Area_Synth")
         
     # Separate features and target 
     X_train = df_train.drop('Cover_Type', axis=1)
     y_train = df_train['Cover_Type']
     
     class_accuracies = np.zeros((k_valid, 7))
+    kf = KFold(n_splits=k_valid, shuffle=True)
     
-    for i in range(k_valid):
-        data_train, data_test, target_train, target_test = train_test_split(
-            X_train, y_train, test_size = 1 / k_valid
-        )
+    for i, (train_index, test_index)  in enumerate(kf.split(df_train)):
+        
+        data_train = X_train.loc[train_index]
+        data_test = X_train.loc[test_index]
+        target_train = y_train[train_index]
+        target_test = y_train[test_index]
+        
         predictor.fit(data_train, target_train)
         y_pred = predictor.predict(data_test)
 
@@ -63,12 +99,101 @@ def IWCV(df_train,
         
     return IMCV, class_accuracies.mean(axis=0)
 
-###############
-def unonehot(df):
-    soil_types = [f"Soil_Type{i}" for i in range(1, 41) if i not in [7, 15]]
-    wilderness_areas = [f"Wilderness_Area{i}" for i in range(1,5) if i not in [7, 15]]
-    df["Wilderness_Area_Synth"] = df[wilderness_areas] @ range(1,5)
-    df["Soil_Type_Synth"] = df[soil_types] @ range(1,39)
-    df = df.drop(columns=wilderness_areas + soil_types)
+### 2 - with oversampling
+def IWCV_oversample(predictor,
+         df_train=df_train, 
+         k_valid=10,
+         ovs_strat={1: 30_000, 2: 30_000}) :
 
-    return df
+    # Define the oversampler
+    adasyn = ADASYN(sampling_strategy=ovs_strat) ## Random state = 4 ou 1 sont les meilleurs so far à 0.8297 en CV (mais fixer seed aussi en cross_val...)
+
+    # Separate features and target 
+    X_train = df_train.drop('Cover_Type', axis=1)
+    y_train = df_train['Cover_Type']
+    
+    class_accuracies = np.zeros((k_valid, 7))
+    kf = KFold(n_splits=k_valid, shuffle=True)
+
+    
+    for i, (train_index, test_index)  in enumerate(kf.split(df_train)):
+        
+        data_train = X_train.loc[train_index]
+        data_test = X_train.loc[test_index]
+        target_train = y_train[train_index]
+        target_test = y_train[test_index]
+        
+        # Oversampling
+        X_train_synth, y_train_synth = adasyn.fit_resample(data_train, target_train)
+        X_train_synth = pd.DataFrame(X_train_synth, columns=X_train.columns)
+        
+        predictor.fit(X_train_synth, y_train_synth)
+        y_pred = predictor.predict(data_test)
+
+        for label in range(1,8):
+            class_accuracies[i, label - 1] = accuracy_score(target_test[target_test == label], 
+                                                        y_pred[target_test == label])
+        IMCV = np.mean(class_accuracies @ coeffs) / np.sum(coeffs)
+        
+    return IMCV, class_accuracies.mean(axis=0)
+
+
+### 3 - with oversampling + kmeans
+# Defining pipe to be able to choose number of clusters
+def pipe_setter(n_clusters=3, clf=RandomForestClassifier(n_estimators=100, random_state=42)):
+    
+    # Initializing kmeans
+    km_test = KMeans(n_clusters=n_clusters, n_init=10, init="k-means++")
+    km_test.fit_predict(df_test.loc[:, "Id":"Wilderness_Area4"])
+
+    # Setting pipe
+    def _enocode_kmeans(X, kmeans=km_test):
+        X = X.copy()
+        X["kmean_cluster"] = kmeans.predict(X.loc[:, "Id":"Wilderness_Area4"])
+        return X
+    km_encoder = FunctionTransformer(_enocode_kmeans)
+
+    cat_col = ["kmean_cluster"]
+    cols = df_train.drop(columns=['Cover_Type']).columns
+
+    preprocessor = ColumnTransformer([
+            ("cat", OneHotEncoder(handle_unknown="ignore"), cat_col),
+            ("others", "passthrough", cols),
+        ])
+    
+    return make_pipeline(km_encoder, preprocessor, clf)
+
+def IWCV_ovs_km(df_train=df_train, 
+         predictor=pipe_setter(), 
+         k_valid=10,
+         coeffs=coeffs):
+    
+    ovs_strat = {1: 30_000, 2: 30_000}
+
+    # Define the oversampler
+    adasyn = ADASYN(sampling_strategy=ovs_strat) 
+
+    # Separate features and target 
+    X_train = df_train.drop('Cover_Type', axis=1)
+    y_train = df_train['Cover_Type']
+    
+    class_accuracies = np.zeros((k_valid, 7))
+    
+    for i in range(k_valid):
+        data_train, data_test, target_train, target_test = train_test_split(
+            X_train, y_train, test_size = 1 / k_valid
+        )
+        
+        # Oversampling
+        X_train_synth, y_train_synth = adasyn.fit_resample(data_train, target_train)
+        X_train_synth = pd.DataFrame(X_train_synth, columns=X_train.columns)
+        
+        predictor.fit(X_train_synth, y_train_synth)
+        y_pred = predictor.predict(data_test)
+
+        for label in range(1,8):
+            class_accuracies[i, label - 1] = accuracy_score(target_test[target_test == label], 
+                                                        y_pred[target_test == label])
+        IMCV = np.mean(class_accuracies @ coeffs) / np.sum(coeffs)
+        
+    return IMCV, class_accuracies.mean(axis=0)
