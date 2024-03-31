@@ -94,10 +94,15 @@ X_train_synth.loc[:, svd_cols] = svd.transform(
     X_train_synth.loc[:, "Id":"Horizontal_Distance_To_Fire_Points"]
 )
 
-# 4. Class Weights
-class_weight = {1: 1, 2: 1, 3: 4,
-                    4: 2, 5: 10, 6: 5,
-                    7: 4}
+X_train_synth.fillna(0, inplace=True)
+df_test.fillna(0, inplace=True)
+
+# 4. Class Weights - Calculated using weights.py
+class_weight = {
+    1: 2.698590816620375, 2: 2.1920183507006015, 3: 16.308193224240043,
+    4: 157.8408041293127, 5: 35.79202858374915, 6: 28.883078146748858,
+    7: 23.24512902580516
+}
 
 # 5.CLASSIFYING
 
