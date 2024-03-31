@@ -69,9 +69,9 @@ def group_geological_zone(df: pd.DataFrame, one_hot=False):
     return df
 
 
-def preprocess(df):
-    df = concat_Soil_Type(df)
-    df = concat_Wilderness_Area(df)
-    df = group_climatic_zone(df)
-    df = group_geological_zone(df)
-    return df
+# def preprocess(df):
+#     df = concat_Soil_Type(df)
+#     df = concat_Wilderness_Area(df)
+#     df = group_climatic_zone(df)
+#     df = group_geological_zone(df)
+#     return df
