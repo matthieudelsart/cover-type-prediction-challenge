@@ -1,3 +1,5 @@
+import numpy as np
+import os
 import pandas as pd
 
 
@@ -318,3 +320,20 @@ def split_ELU(df: pd.DataFrame, ST=ST):
     df['complex'] = df['ST_concat'].map(complex_new)
 
     return df
+
+
+def stack_predictions(folder_path: str):
+    files = os.listdir(folder_path)
+    preds = []
+
+    for file in files:
+        file_path = os.path.join(folder_path, file)
+        pred = pd.read_csv(file_path).sort_values("Id")["Cover_Type"]
+        preds.append(pred)
+
+    # preds = random.sample(preds,20)
+    preds_arr = np.stack(preds, axis=1)
+    y_pred = np.apply_along_axis(
+        lambda x: np.bincount(x).argmax(), axis=1, arr=preds_arr)
+    predictions_df = clean_predictor(y_pred)
+    predictions_df.to_csv('Stacking_predictions.csv', index=False)
