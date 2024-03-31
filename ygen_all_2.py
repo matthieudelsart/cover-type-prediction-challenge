@@ -6,6 +6,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.decomposition import TruncatedSVD
 
 from utils_2 import *
 
@@ -82,26 +83,30 @@ df_test["kmean"] = km.fit_predict(
 X_train_synth["kmean"] = km.predict(
     X_train_synth.loc[:, "Elevation":"Horizontal_Distance_To_Fire_Points"])
 
-# PCA - With ID
-pca_1 = PCA(n_components=4, random_state=pca_random)
-pca_cols_1 = ["PCA_1", "PCA_2", "PCA_3", "PCA_4"]
-df_test.loc[:, pca_cols_1] = pca_1.fit_transform(
-    df_test.loc[:, "Id":"Horizontal_Distance_To_Fire_Points"])
+# TruncatedSVD - With ID
+svd = TruncatedSVD(n_components=4, n_iter=7, random_state=42)
+svd_cols = ["SVD_1", "SVD_2", "SVD_3", "SVD_4"]
+df_test.loc[:, svd_cols] = svd.fit_transform(
+    df_test.loc[:, "Id":"Horizontal_Distance_To_Fire_Points"]
+)
 
-X_train_synth.loc[:, pca_cols_1] = pca_1.transform(
-    X_train_synth.loc[:, "Id":"Horizontal_Distance_To_Fire_Points"])
-# Dropping PCA_1 (virtually the same as the Id column)
-df_test.drop(columns='PCA_1', inplace=True)
-X_train_synth.drop(columns='PCA_1', inplace=True)
+X_train_synth.loc[:, svd_cols] = svd.transform(
+    X_train_synth.loc[:, "Id":"Horizontal_Distance_To_Fire_Points"]
+)
 
+# 4. Class Weights
+class_weight = {1: 1, 2: 1, 3: 4,
+                    4: 2, 5: 10, 6: 5,
+                    7: 4}
 
-# 4.CLASSIFYING
+# 5.CLASSIFYING
 
 clf = ExtraTreesClassifier(n_jobs=-1, max_features=None,
                            min_samples_leaf=min_samples_leaf,
                            min_samples_split=min_samples_split,
                            n_estimators=n_estimators,
-                           random_state=ext_random)
+                           random_state=ext_random,
+                           class_weight=class_weight)
 
 
 clf.fit(X_train_synth, y_train_synth)
@@ -109,4 +114,5 @@ y_pred = clf.predict(df_test)
 predictions_df = clean_predictor(y_pred)
 predictions_df.to_csv(f'with_all_features.csv', index=False)
 print(accuracy_score(pd.read_parquet("ground_truth.parquet")
-      ["Cover_Type"], predictions_df["Cover_Type"]))
+      ["Cover_Type"], predictions_df["Cover_Type"])
+)
