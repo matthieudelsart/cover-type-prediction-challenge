@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from imblearn.over_sampling import SVMSMOTE
+from sklearn.metrics import accuracy_score
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
@@ -13,14 +14,11 @@ def preprocess(df):
     # Un-one-hot-encoding the categorical variables
     df = concat_Soil_Type(df, drop_value=True)
     df = concat_Wilderness_Area(df, drop_value=True)
-    # Adding new features using ELU
-    df = split_ELU
     return df
 
 
 df_test = pd.read_csv("test-full.csv")
 df_train = pd.read_csv("train.csv")
-predict_best = pd.read_csv("test_predictions_best.csv")["Cover_Type"]
 
 # Parameters
 ovs1 = 60_000
@@ -79,25 +77,23 @@ for label in log_combinator:
 
 # KMEANS - Without ID
 km = KMeans(n_clusters=30, n_init=5, init="k-means++")
-# "Horizontal_Distance_To_Fire_Points"])
-df_test["kmean"] = km.fit_predict(df_test.loc[:, "Elevation":])
-# "Horizontal_Distance_To_Fire_Points"])
-X_train_synth["kmean"] = km.predict(X_train_synth.loc[:, "Elevation":])
+df_test["kmean"] = km.fit_predict(
+    df_test.loc[:, "Elevation":"Horizontal_Distance_To_Fire_Points"])
+X_train_synth["kmean"] = km.predict(
+    X_train_synth.loc[:, "Elevation":"Horizontal_Distance_To_Fire_Points"])
 
 # PCA - With ID
 pca_1 = PCA(n_components=4, random_state=pca_random)
 pca_cols_1 = ["PCA_1", "PCA_2", "PCA_3", "PCA_4"]
-# "Horizontal_Distance_To_Fire_Points"])
-df_test.loc[:, pca_cols_1] = pca_1.fit_transform(df_test.loc[:, "Id":])
-# "Horizontal_Distance_To_Fire_Points"])
-X_train_synth.loc[:, pca_cols_1] = pca_1.transform(X_train_synth.loc[:, "Id":])
+df_test.loc[:, pca_cols_1] = pca_1.fit_transform(
+    df_test.loc[:, "Id":"Horizontal_Distance_To_Fire_Points"])
+
+X_train_synth.loc[:, pca_cols_1] = pca_1.transform(
+    X_train_synth.loc[:, "Id":"Horizontal_Distance_To_Fire_Points"])
 # Dropping PCA_1 (virtually the same as the Id column)
 df_test.drop(columns='PCA_1', inplace=True)
 X_train_synth.drop(columns='PCA_1', inplace=True)
 
-# Peut être à supprimer
-X_train_synth.fillna(0, inplace=True)
-df_test.fillna(0, inplace=True)
 
 # 4.CLASSIFYING
 
@@ -112,22 +108,5 @@ clf.fit(X_train_synth, y_train_synth)
 y_pred = clf.predict(df_test)
 predictions_df = clean_predictor(y_pred)
 predictions_df.to_csv(f'with_all_features.csv', index=False)
-
-# 5. Removing less important features
-nb_features_to_remove = 5
-col = pd.DataFrame({'col_name': clf.feature_names_in_, 'value': clf.feature_importances_}).sort_values(
-    'value').col_name.values.tolist()
-print(col[:nb_features_to_remove])
-
-print('Remove features less important ...')
-for i in range(nb_features_to_remove):
-    print(f'Without {col[i]}')
-    clf.fit(X_train_synth[col[i+1:]], y_train_synth)
-    y_pred = clf.predict(df_test[col[i+1:]])
-    predictions_df = clean_predictor(y_pred)
-    # accuracy = accuracy_score(predictions_df['Cover_Type'], predict_true)
-    # print('\t', accuracy)
-    col1 = pd.DataFrame({'col_name': clf.feature_names_in_, 'value': clf.feature_importances_}).sort_values(
-        'value').col_name.values.tolist()
-    print(col1[:nb_features_to_remove])
-    predictions_df.to_csv(f'without{" & ".join(col[:i])}.csv', index=False)
+print(accuracy_score(pd.read_parquet("ground_truth.parquet")
+      ["Cover_Type"], predictions_df["Cover_Type"]))
