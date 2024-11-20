@@ -1,4 +1,29 @@
-Data
+# Forest cover type prediction challenge
+
+This project was developped for the final evaluation of the Machine Learning II class at Ecole Polytechnique (MAP541). The evaluation relied on a multi-class classification [Kaggle challenge](https://www.kaggle.com/competitions/forest-dsb-2023-v2/overview), for which our team ranked 1st.
+The objective was to predict the forest cover type of various locations in the Roosevelt National Forest of northern Colorado, using only geographical information.
+
+Our model relies on an Extra Tree Classifier and especially leverages oversampling techniques and unsupervised learning for feature engineering.
+
+### Table of Contents
+1. [Team](#1-team)
+2. [Project Presentation](#2-project-presentation)
+    1. [Objective](#objective)
+    2. [Data](#data)
+3. [Our Solution](#3-our-solution)
+
+## 1. Team 
+- Matthieu Delsart (@matthieudelsart)
+- François Lebrun (@FrancoisLbrn)
+- Tim Valencony (@tim-vlc)
+
+## 2. Project presentation
+
+### Objective
+
+Your goal is to predict the forest cover type (a categorical variable) from various informations related to an area. The metric used for ronking is the accuracy on a test set.
+
+### Data
 
 Predicting forest cover type from cartographic variables only
 (no remotely sensed data). The actual forest cover type for
@@ -145,3 +170,15 @@ Forest Cover Type Classes:
     5 - Aspen
     6 - Douglas-fir
     7 - Krummholz
+
+## 3. Solution
+The details of our solution are presented in the **Report.pdf** file.
+
+Our model is a fine-tuned Extra Tree Classifier and relies on several methods to tackle the specifities of the problem:
+- **Class imbalance** between train and test sets:
+    - Importance-weighted cross-validation for local evaluation
+    - Oversampling (SMOTE)
+    - Weighted loss fonction
+- **Additional features**:
+    - Unsupervised learning features (K-means, SVD)
+    - Polynomial features
